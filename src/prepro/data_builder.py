@@ -39,7 +39,8 @@ def load_json(p, lower):
         tokens = [t['word'] for t in sent['tokens']]
         if (lower):
             tokens = [t.lower() for t in tokens]
-        if (tokens[0] == '@highlight'):
+        #if (tokens[0] == '@highlight'):
+        if (tokens[0] == '@summary'):
             flag = True
             tgt.append([])
             continue
@@ -117,7 +118,8 @@ def tokenize(args):
     print("Making list of files to tokenize...")
     with open("mapping_for_corenlp.txt", "w") as f:
         for s in stories:
-            if (not s.endswith('story')):
+            #if (not s.endswith('story')):
+            if (not s.endswith('.txt')):
                 continue
             f.write("%s\n" % (os.path.join(stories_dir, s)))
     command = ['java', 'edu.stanford.nlp.pipeline.StanfordCoreNLP', '-annotators', 'tokenize,ssplit',
