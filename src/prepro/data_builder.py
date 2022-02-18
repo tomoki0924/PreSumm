@@ -330,6 +330,53 @@ def _format_to_bert(params):
     gc.collect()
 
 
+def format_to_lines_from_dir(args):
+    corpus_mapping = {}
+    train_files, valid_files, test_files = [], [], []
+    for corpus_type in ['valid', 'test', 'train']:
+        #temp = []
+        #for line in open(pjoin(args.map_path, 'mapping_' + corpus_type + '.txt')):
+            #temp.append(hashhex(line.strip()))
+        #corpus_mapping[corpus_type] = {key.strip(): 1 for key in temp}
+        for f in glob.glob(pjoin(args.raw_path, corpus_type,'*.json')):
+            #real_name = f.split('/')[-1].split('.')[0]
+            if (corpus_type == 'valid'):
+                valid_files.append(f)
+            elif (corpus_type == 'test'):
+                test_files.append(f)
+            elif (corpus_type == 'train'):
+                train_files.append(f)
+            # else:
+            #     train_files.append(f)
+
+    corpora = {'train': train_files, 'valid': valid_files, 'test': test_files}
+    for corpus_type in ['train', 'valid', 'test']:
+        a_lst = [(f, args) for f in corpora[corpus_type]]
+        pool = Pool(args.n_cpus)
+        dataset = []
+        p_ct = 0
+        for d in pool.imap_unordered(_format_to_lines, a_lst):
+            dataset.append(d)
+            if (len(dataset) > args.shard_size):
+                pt_file = "{:s}.{:s}.{:d}.json".format(args.save_path, corpus_type, p_ct)
+                with open(pt_file, 'w') as save:
+                    # save.write('\n'.join(dataset))
+                    save.write(json.dumps(dataset))
+                    p_ct += 1
+                    dataset = []
+
+        pool.close()
+        pool.join()
+        if (len(dataset) > 0):
+            pt_file = "{:s}.{:s}.{:d}.json".format(args.save_path, corpus_type, p_ct)
+            with open(pt_file, 'w') as save:
+                # save.write('\n'.join(dataset))
+                save.write(json.dumps(dataset))
+                p_ct += 1
+                dataset = []
+
+
+
 def format_to_lines(args):
     corpus_mapping = {}
     for corpus_type in ['valid', 'test', 'train']:
